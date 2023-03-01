@@ -14,11 +14,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\srpall\\source\\repos\\TestHandler\\TestHandler\\TestHandler.csproj",
+      "projectUniqueName": "C:\\Users\\srpall\\Documents\\RemotePanoramaGit\\RemotePanorama\\TestHandler\\TestHandler\\TestHandler.csproj",
       "projectName": "TestHandler",
-      "projectPath": "C:\\Users\\srpall\\source\\repos\\TestHandler\\TestHandler\\TestHandler.csproj",
+      "projectPath": "C:\\Users\\srpall\\Documents\\RemotePanoramaGit\\RemotePanorama\\TestHandler\\TestHandler\\TestHandler.csproj",
       "packagesPath": "C:\\Users\\srpall\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\srpall\\source\\repos\\TestHandler\\TestHandler\\obj\\",
+      "outputPath": "C:\\Users\\srpall\\Documents\\RemotePanoramaGit\\RemotePanorama\\TestHandler\\TestHandler\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

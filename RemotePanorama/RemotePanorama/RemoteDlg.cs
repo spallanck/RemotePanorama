@@ -20,6 +20,7 @@ namespace RemotePanorama
         private static string QueryFolderString = "/query-selectRows.view?schemaName=targetedms&query.queryName=Runs&query.containerFilterName=AllFolders&query.columns=Container%2CFileName%2CDeleted%2CContainer%2FPath";
         private string ContainerString = "https://panoramaweb.org/project/getContainers.view?includeSubfolders=true&moduleProperties=TargetedMS";
         private string FileString = "https://panoramaweb.org/_webdav/Panorama%20Public/?method=json";
+        private string StartingQuery = "https://panoramaweb.org/Panorama%20Public/query-selectRows.view?schemaName=targetedms&query.queryName=Runs&query.containerFilterName=AllFolders&query.columns=Container%2CFileName%2CDeleted%2CContainer%2FPath";
         public string _server;
         public string _user;
         public string _pass;
@@ -176,6 +177,7 @@ namespace RemotePanorama
             }
         }
 
+        //Finds the most recent version of a file and prepares it to be added to the ListView
         private static string[] GetLatestVersion(string path, ListView listView)
         {
             listView.Items.Clear();
@@ -348,6 +350,7 @@ namespace RemotePanorama
             }       
         }
 
+        //Given a node, finds all subfolders containing .sky files and adds them to the tree
         private static void AddQueryFolders(TreeNode node)
         {
             if (node.FirstNode != null && node.FirstNode.Text.Equals("DummyNode"))
@@ -518,6 +521,7 @@ namespace RemotePanorama
             }
         }
 
+        //When a node is about to be expanded, add all of that node's subufolders to the tree
         private void treeView2_BeforeExpand(object sender, TreeViewCancelEventArgs e)
         {
             //If the only node below is a dummy node
@@ -526,22 +530,11 @@ namespace RemotePanorama
                 var path = (string)e.Node.Tag;
                 if (checkBox1.Checked)
                 {
-                    //Since I don't have access to query the targetedMSRuns schema from the /project/ folder, I need to individually 
+              
                     if (e.Node.Name.Equals("First"))
                     {
                         e.Node.FirstNode.Remove();
                         AddCorrectSkyFolders(e.Node);
-                        /*
-                        foreach (var curPath in Paths)
-                        {
-                            string pathName = curPath.Replace("/", "");
-                            TreeNode pathNode = new TreeNode(pathName);
-                            pathNode.Tag = curPath;
-                            pathNode.Name = curPath;
-                            e.Node.Nodes.Add(pathNode);
-                            TreeNode dummy = new TreeNode("DummyNode");
-                            pathNode.Nodes.Add(dummy);
-                        }*/
                     }
                     else
                     {
@@ -562,11 +555,12 @@ namespace RemotePanorama
 
 
 
-        //Needs to be cleaned up
+        //Adds the starting folders containing Skyline files
+        //This method is almost identical to AddQueryFolders except the uri is different, I need tomerge the two methods together
         private void AddCorrectSkyFolders(TreeNode node)
         {
             var path = (string)node.Tag;
-            string query = "https://panoramaweb.org/Panorama%20Public/query-selectRows.view?schemaName=targetedms&query.queryName=Runs&query.containerFilterName=AllFolders&query.columns=Container%2CFileName%2CDeleted%2CContainer%2FPath";
+            string query = StartingQuery;
             Uri queryUri = new Uri(query);
             var webClient = new WebClientWithCredentials(queryUri, userCopy, passCopy);
             JToken json = webClient.Get(queryUri);
