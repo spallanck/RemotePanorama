@@ -4,6 +4,9 @@
     <Compile Update="RemoteFileDialog.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="RemotePanorama\RemoteFileDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Update="RemoteFileDialog.resx">

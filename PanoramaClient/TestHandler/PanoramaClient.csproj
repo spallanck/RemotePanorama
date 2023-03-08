@@ -13,9 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="RemotePanorama">
-      <HintPath>..\..\RemotePanorama\RemotePanorama\bin\Debug\net6.0-windows\RemotePanorama.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\..\RemotePanorama\RemotePanorama.csproj" />
   </ItemGroup>
 
   <ItemGroup>
