@@ -34,12 +34,18 @@ namespace TestHandler
             PanoramaClient.Properties.Settings.Default.user = userText.Text;
             PanoramaClient.Properties.Settings.Default.pass =passText.Text;
             dlg.ShowDialog();
-           
             
-            string file = dlg._fileURL;
-            string folder = dlg._folder;
-            filePath.Text = file;
-            folderPath.Text = folder;
+            if (dlg != null && dlg._fileURL != null)
+            {
+                string file = dlg._fileURL;
+                filePath.Text = file;
+            }
+            if (dlg != null && dlg._folder != null)
+            {
+                string folder = dlg._folder;
+                folderPath.Text = folder;
+            }
+            
             PanoramaClient.Properties.Settings.Default.Save();
             
         }
