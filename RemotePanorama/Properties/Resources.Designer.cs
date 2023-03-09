@@ -111,6 +111,35 @@ namespace pwiz.PanoramaClient.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Proteins: {0}, Peptides: {1}, Precursors: {2}, Transitions: {3}, Replicates: {4}.
+        /// </summary>
+        internal static string RemoteFileDialog_AddQueryFiles_Proteins___0___Peptides___1___Precursors___2___Transitions___3___Replicates___4_ {
+            get {
+                return ResourceManager.GetString("RemoteFileDialog_AddQueryFiles_Proteins___0___Peptides___1___Precursors___2___Tra" +
+                        "nsitions___3___Replicates___4_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Proteins: {0}, Peptides: {1}, Precursors: {2}, Transitions: {3}, Replicates: {4}.
+        /// </summary>
+        internal static string RemoteFileDialog_GetLatestVersion_Proteins___0___Peptides___1___Precursors___2___Transitions___3___Replicates___4_ {
+            get {
+                return ResourceManager.GetString("RemoteFileDialog_GetLatestVersion_Proteins___0___Peptides___1___Precursors___2___" +
+                        "Transitions___3___Replicates___4_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Open.
+        /// </summary>
+        internal static string RemoteFileDialog_RemoteFileDialog_Load_Open {
+            get {
+                return ResourceManager.GetString("RemoteFileDialog_RemoteFileDialog_Load_Open", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap uparrow {

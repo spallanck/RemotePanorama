@@ -8,6 +8,7 @@ using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.IO.Compression;
+using pwiz.PanoramaClient.Properties;
 
 namespace pwiz.PanoramaClient
 {
@@ -48,12 +49,12 @@ namespace pwiz.PanoramaClient
         private List<Int32> ExpandedState = new List<Int32>();
     
 
-        public RemoteFileDialog(string user, string pass)
+        public RemoteFileDialog(string user, string pass, string server)
         {
+            _server = server;
             _user = user;
             _pass = pass;
             InitializeComponent();
-            SetUpListView();
             Uri uriFolder = new Uri(ContainerString);
             var webClient = new WebClientWithCredentials(uriFolder, _user, _pass);
             JToken json = webClient.Get(uriFolder);
@@ -88,24 +89,16 @@ namespace pwiz.PanoramaClient
             }
         }
 
-        //Adds columns to the ListView
-        private void SetUpListView()
-        {
-            listView.View = View.Details;
-            listView.Columns.Add("Name", 300);
-            listView.Columns.Add("Size", 60);
-            listView.Columns.Add("Versions", 60);
-            listView.Columns.Add("Replaced By", 160);
-        }
-
-        //Sets a username and password and changes the 'Open' button text if a custom string is passed in
-        private void Form1_Load(object sender, EventArgs e)
+        /// <summary>
+        /// Sets a username and password and changes the 'Open' button text if a custom string is passed in
+        /// </summary>
+        private void RemoteFileDialog_Load(object sender, EventArgs e)
         {
             userCopy = _user;
             passCopy = _pass;
             if (string.IsNullOrEmpty(_OKButtonText))
             {
-                open.Text = "Open";
+                open.Text = Resources.RemoteFileDialog_RemoteFileDialog_Load_Open;
             }
             else
             {
@@ -134,10 +127,15 @@ namespace pwiz.PanoramaClient
         }
 
 
-        //Add all children of given node, and if those children have children, give them a dummy node
+        /// <summary>
+        /// Add all children of given node, and if those children have children, give them a dummy node
+        /// </summary>
+        /// <param name="uri"></param>
+        /// <param name="node"></param>
         private void AddFolders(Uri uri, TreeNode node)
         {
-            if (node.FirstNode != null && node.FirstNode.Text.Equals("DummyNode"))
+            //if (node.FirstNode != null && node.FirstNode.Text.Equals("DummyNode"))
+            if (IsDummyNode(node.FirstNode))
             {
                 node.FirstNode.Remove();
             }
@@ -156,14 +154,18 @@ namespace pwiz.PanoramaClient
                     var childrenCount = subFolder[@"children"].Children();
                     if (childrenCount.Count() > 0)
                     {
-                        newNode.Nodes.Add(new TreeNode("DummyNode"));
+                        CreateDummyNode(newNode);
+                        //newNode.Nodes.Add(new TreeNode("DummyNode"));
                     }
                 }
             }
         }
 
-
-        //Determines if a given folder has read permissions
+        /// <summary>
+        /// Determines if a given folder has read permissions
+        /// </summary>
+        /// <param name="folderJson"></param>
+        /// <returns></returns>
         public static bool CheckFolderPermissions(JToken folderJson)
         {
             if (folderJson != null)
@@ -175,15 +177,19 @@ namespace pwiz.PanoramaClient
             return false;
         }
 
-        
-        //Adds all files in a particular folder 
+
+        /// <summary>
+        /// Adds all files in a particular folder 
+        /// </summary>
+        /// <param name="newUri"></param>
+        /// <param name="listView"></param>
         public static void AddChildFiles(Uri newUri, ListView listView)
         {
             var webClient = new WebClientWithCredentials(newUri, userCopy, passCopy);
             JToken json = webClient.Get(newUri);
-            if ((int)json["fileCount"] != 0)
+            if ((int)json[@"fileCount"] != 0)
             {
-                JToken files = json["files"];
+                JToken files = json[@"files"];
                 foreach (dynamic file in files)
                 {
                     string[] listItem = new string[2];
@@ -235,12 +241,17 @@ namespace pwiz.PanoramaClient
             var fileInfos = AddQueryFile(listView, path, name);
             result[1] = fileInfos[0];
             ListViewItem fileNode = new ListViewItem(result);
-            fileNode.ToolTipText = "Proteins: " + fileInfos[1] + " Peptides: " + fileInfos[2] + " Precursors: " + fileInfos[3] + " Transitions: " + fileInfos[4] + " Replicates: " + fileInfos[5];
+            fileNode.ToolTipText = string.Format(Resources.RemoteFileDialog_GetLatestVersion_Proteins___0___Peptides___1___Precursors___2___Transitions___3___Replicates___4_,
+                fileInfos[1], fileInfos[2], fileInfos[3], fileInfos[4], fileInfos[5]);
             listView.Items.Add(fileNode);
             return result;
         }
 
-        //Returns true if a file has multiple versions, and false if not
+        /// <summary>
+        /// Returns true if a file has multiple versions, and false if not
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
         private static bool HasVersions(string path)
         {
             string query = CheckIfVersions;
@@ -254,7 +265,12 @@ namespace pwiz.PanoramaClient
             return rowCount != 0;
         }
 
-        //Find number of rows which gives version, and latest version is the only version where replaced is false
+        /// <summary>
+        /// Find number of rows which gives version, and latest version is the only version where replaced is false
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="fileName"></param>
+        /// <returns></returns>
         private static string[] GetVersionInfo(string path, string fileName)
         {
             string query = ReplacedInfo;
@@ -267,7 +283,7 @@ namespace pwiz.PanoramaClient
             int rowCount = (int)rowNum;
             if (rowCount == 0)
             {
-                result[0] = "1";
+                result[0] = 1.ToString();
                 return result;
             }
 
@@ -302,7 +318,13 @@ namespace pwiz.PanoramaClient
 
         }
 
-        //Given a folder path, try and add only the most recent file located inside the folder to the ListView
+        /// <summary>
+        /// Given a folder path, try and add only the most recent file located inside the folder to the ListView
+        /// </summary>
+        /// <param name="list"></param>
+        /// <param name="nodePath"></param>
+        /// <param name="fileName"></param>
+        /// <returns></returns>
         private static string[] AddQueryFile(ListView list, string nodePath, string fileName)
         {
             string[] result = new string[6];
@@ -323,7 +345,13 @@ namespace pwiz.PanoramaClient
             return result;
         }
 
-        //Given a folder path, try and add all .sky files inside that folder to this ListView
+        /// <summary>
+        /// Given a folder path, try and add all .sky files inside that folder to this ListView
+        /// </summary>
+        /// <param name="listView"></param>
+        /// <param name="nodePath"></param>
+        /// <param name="l"></param>
+        /// <param name="options"></param>
         private static void AddQueryFiles(ListView listView, string nodePath, Label l, ComboBox options)
         {
             string query = PeptideInfoQuery;
@@ -379,7 +407,11 @@ namespace pwiz.PanoramaClient
                         }
                         ListViewItem fileNode = new ListViewItem(listItem, 1);
                         fileNode.Name = (string)row[@"_labkeyurl_FileName"];
-                        fileNode.ToolTipText = "Proteins: " + (string)row[@"PeptideGroupCount"] + " Peptides: " + row[@"PeptideCount"] + " Precursors: " + row[@"PrecursorCount"] + " Transitions: " + row[@"TransitionCount"] + " Replicates: " + row[@"ReplicateCount"];
+                        var toolTipInfo = string.Format(
+                            Resources.RemoteFileDialog_AddQueryFiles_Proteins___0___Peptides___1___Precursors___2___Transitions___3___Replicates___4_,
+                            row[@"PeptideGroupCount"], row[@"PeptideCount"], row[@"PrecursorCount"],
+                            row[@"TransitionCount"], row[@"ReplicateCount"]);
+                        fileNode.ToolTipText = toolTipInfo;
                         listView.Items.Add(fileNode);
                     }
                 }
@@ -391,7 +423,8 @@ namespace pwiz.PanoramaClient
 
         private static void AddQueryFolders(TreeNode node)
         {
-            if (node.FirstNode != null && node.FirstNode.Text.Equals("DummyNode"))
+            //if (node.FirstNode != null && node.FirstNode.Text.Equals("DummyNode"))
+            if (IsDummyNode(node.FirstNode))
             {
                node.Nodes.Clear();
             }
@@ -433,7 +466,8 @@ namespace pwiz.PanoramaClient
                                     inTree = true;
                                     if (curNode.Nodes.Count == 0)
                                     {
-                                        curNode.Nodes.Add(new TreeNode("DummyNode"));
+                                        CreateDummyNode(curNode);
+                                        //curNode.Nodes.Add(new TreeNode("DummyNode"));
                                     }
                                 }
                             }
@@ -441,7 +475,8 @@ namespace pwiz.PanoramaClient
                             {
                                 if (!origPath.Equals(newPath))
                                 {
-                                    fileNode.Nodes.Add(new TreeNode("DummyNode"));
+                                    CreateDummyNode(fileNode);
+                                    //fileNode.Nodes.Add(new TreeNode("DummyNode"));
                                 }
                                 node.Nodes.Add(fileNode);
                             }  
@@ -455,8 +490,12 @@ namespace pwiz.PanoramaClient
             }  
         }
 
-        //When a node is clicked on, find all of the files located in the corresponding remote folder and select the node
-        //In the case of .sky folders, if the node has not been expanded yet, find its subfolders
+        /// <summary>
+        /// When a node is clicked on, find all of the files located in the corresponding remote folder and select the node.
+        /// In the case of .sky folders, if the node has not been expanded yet, find its subfolders
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void treeView2_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
         {
             ClearTreeRecursive(treeView.Nodes);
@@ -507,7 +546,10 @@ namespace pwiz.PanoramaClient
 
         }
 
-        //De-selects all nodes in the tree
+        /// <summary>
+        /// De-selects all nodes in the tree
+        /// </summary>
+        /// <param name="nodes"></param>
         private void ClearTreeRecursive(IEnumerable nodes)
         {
             foreach (TreeNode node in nodes)
@@ -518,8 +560,11 @@ namespace pwiz.PanoramaClient
             }
 
         }
-    
-        //Currently using for testing purposes
+
+        /// <summary>
+        /// Currently using for testing purposes
+        /// </summary>
+        /// <param name="nodes"></param>
         private void PrintTreeRecursive(IEnumerable nodes)
         {
             foreach (TreeNode node in nodes)
@@ -542,7 +587,11 @@ namespace pwiz.PanoramaClient
 
         }
 
-        //Resets the TreeView to display either all Panorama folders, or only Panorama folders containing .sky files
+        /// <summary>
+        /// Resets the TreeView to display either all Panorama folders, or only Panorama folders containing .sky files
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void checkBox1_CheckedChanged(object sender, EventArgs e)
         {
             if (!restoring)
@@ -559,8 +608,9 @@ namespace pwiz.PanoramaClient
                 comboBox1.Visible = false;
                 versionLabel.Visible = false;
                 treeView.Nodes.Add(treeNode);
-                TreeNode dummy = new TreeNode("DummyNode");
-                treeNode.Nodes.Add(dummy);
+                CreateDummyNode(treeNode);
+                //var dummy = new TreeNode("DummyNode");
+                //treeNode.Nodes.Add(dummy);
                 if (checkBox1.Checked)
                 {
                     showingSky = true;
@@ -570,7 +620,7 @@ namespace pwiz.PanoramaClient
                 else
                 {
                     showingSky = false;
-                    Uri uri = new Uri(FileString);
+                    var uri = new Uri(FileString);
                     JToken folders = null;
                     try
                     {
@@ -587,7 +637,8 @@ namespace pwiz.PanoramaClient
         private void treeView2_BeforeExpand(object sender, TreeViewCancelEventArgs e)
         {
             //If the only node below is a dummy node
-            if (e.Node.FirstNode != null && e.Node.FirstNode.Text.Equals("DummyNode"))
+            //if (e.Node.FirstNode != null && e.Node.FirstNode.Text.Equals("DummyNode"))
+            if (IsDummyNode(e.Node.FirstNode))
             {
                 var path = (string)e.Node.Tag;
                 if (checkBox1.Checked)
@@ -619,7 +670,7 @@ namespace pwiz.PanoramaClient
         {
             foreach (TreeNode node in nodes)
             {
-                if (node.Name != String.Empty && node.Name.StartsWith("Selected"))
+                if (node.Name != string.Empty && node.Name.StartsWith("Selected"))
                 {
                     node.Name = node.Name.Replace("Selected", "");
                     //Highlight the selected node
@@ -647,8 +698,10 @@ namespace pwiz.PanoramaClient
             }
         }
 
-
-        //Uses a slightly different query to find all accessible folders containing targeted MS runs and adds them to the tree
+        /// <summary>
+        /// Uses a slightly different query to find all accessible folders containing targeted MS runs and adds them to the tree
+        /// </summary>
+        /// <param name="node"></param>
         private void AddInitialSkyFolders(TreeNode node)
         {
             var path = (string)node.Tag;
@@ -681,7 +734,8 @@ namespace pwiz.PanoramaClient
                             inTree = true;
                             if (curNode.Nodes.Count == 0)
                             {
-                                curNode.Nodes.Add(new TreeNode("DummyNode"));
+                                CreateDummyNode(curNode);
+                                //curNode.Nodes.Add(new TreeNode("DummyNode"));
                             }
                         }
                     }
@@ -690,15 +744,20 @@ namespace pwiz.PanoramaClient
                         //If this folder isn't in the tree, and the folder has subfolders, give it a dummy node
                         if (!origPath.Substring(1).Equals(newPath))
                         {
-                            fileNode.Nodes.Add(new TreeNode("DummyNode"));
+                            CreateDummyNode(fileNode);
+                            //fileNode.Nodes.Add(new TreeNode("DummyNode"));
                         }
                         node.Nodes.Add(fileNode);
                     }
                 }
             }
         }
-       
-        //Displays either all versions of a Skyline file, or only the most recent version
+
+        /// <summary>
+        /// Displays either all versions of a Skyline file, or only the most recent version
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
             listView.Items.Clear();
@@ -722,7 +781,7 @@ namespace pwiz.PanoramaClient
             this.Close();
         }
 
-        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        private void RemoteFileDialog_FormClosing(object sender, FormClosingEventArgs e)
         {
             
             if (listView.SelectedItems.Count != 0)
@@ -792,8 +851,12 @@ namespace pwiz.PanoramaClient
             lastSelected = e.Node;
         }
 
-        //Downloads the selected file to the documents folder
-        //Currently hardcoded to my documents, needs to be changed
+        /// <summary>
+        /// Downloads the selected file to the documents folder
+        /// Currently hardcoded to my documents, needs to be changed
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void listView_MouseDoubleClick(object sender, MouseEventArgs e)
         {
             string downloadName = listView.SelectedItems[0].Name;
@@ -920,6 +983,36 @@ namespace pwiz.PanoramaClient
                 AddChildFiles(uri, listView);
             }
         }
+
+        public const string DUMMYNODE = "DummyNode";
+
+        /// <summary>
+        /// Creates a placeholder child node under a given current node
+        /// </summary>
+        /// <param name="curNode"></param>
+        private static void CreateDummyNode(TreeNode curNode)
+        {
+            var dummyNode = new TreeNode(RemoteFileDialog.DUMMYNODE);
+            curNode.Nodes.Add(dummyNode);
+        }
+
+        /// <summary>
+        /// Returns true if the given node is a placeholder node, and false if not
+        /// </summary>
+        /// <param name="node"></param>
+        /// <returns></returns>
+        private static bool IsDummyNode(TreeNode node)
+        {
+            if (node != null)
+            {
+                return node.Text.Equals(RemoteFileDialog.DUMMYNODE);
+            }
+            else
+            {
+                return false;
+            }
+        }
+            
     }
 
 

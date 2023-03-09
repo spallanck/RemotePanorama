@@ -5,3 +5,7 @@
 /PanoramaClient/.vs
 /RemotePanorama/obj
 /RemotePanorama/RemotePanorama.csproj.user
+/RemotePanorama/bin
+/RemotePanorama/.vs
+/RemotePanorama/RemotePanorama.csproj.DotSettings.user
+/PanoramaClient/*.user
